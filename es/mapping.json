@@ -1,0 +1,33 @@
+{
+    "settings": {
+       "index": {
+             "number_of_shards": 1,
+             "number_of_replicas": 1
+       },
+       "analysis": {
+         "analyzer": {
+           "analyzer-name": {
+                 "type": "custom",
+                 "tokenizer": "keyword",
+                 "filter": "lowercase"
+           }
+         }
+       }
+      },
+      "mappings": {
+          
+           "properties": {
+             "id": {
+                   "type": "integer"
+             },
+             "title": {
+                   "type": "text"      
+             },
+             "artist": {
+                   "type": "text",
+                   "analyzer": "analyzer-name"
+             }
+           
+         }
+       } 
+}

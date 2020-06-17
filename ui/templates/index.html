@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="si">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <link rel="stylesheet" href="../static/style.css" />
+    </head>
+    <body>
+        <div class="container">
+            {% if message %}
+            <p class="message">{{ message | safe }}</p>
+            {% endif %}
+            <form action="/search" method="POST">
+              <div class="form-group" lang="si">
+                <h3>Search</h3>
+                <input
+                  type="text"
+                  name="query"
+                  placeholder="Search for lyrics"
+                />
+              </div>
+            </form>
+            {{response}}
+        </div>
+    </body>
+</html>
