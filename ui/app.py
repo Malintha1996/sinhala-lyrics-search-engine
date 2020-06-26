@@ -18,3 +18,7 @@ def search():
 if __name__ == '__main__':
     app.DEBUG = True
     app.run()
+     search():
+    if(request.method == "POST"):
+        resp = es.search(index='sinhalalyrics')
+        query = request.form['query']
