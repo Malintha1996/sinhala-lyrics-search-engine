@@ -68,22 +68,42 @@
              "artist": {
                   "type": "text",
                   "analyzer":"sinhala-analyzer-1",
-                  "search_analyzer": "sinhala-search-analyzer"
+                  "search_analyzer": "sinhala-search-analyzer",
+                  "fields": {
+                       "keyword":{
+                          "type":"keyword"
+                       }
+                   }
              },
              "genre": {
-                  "type": "text",
+                  "type": "keyword",
                   "analyzer": "sinhala-analyzer-1",
-                  "search_analyzer": "sinhala-search-analyzer"
+                  "search_analyzer": "sinhala-search-analyzer",
+                  "fields": {
+                    "keyword":{
+                       "type":"keyword"
+                    }
+                  }
              },
              "writer": {
                   "type": "text",
                   "analyzer": "sinhala-analyzer-1",
-                  "search_analyzer": "sinhala-search-analyzer"
+                  "search_analyzer": "sinhala-search-analyzer",
+                  "fields": {
+                    "keyword":{
+                       "type":"keyword"
+                    }
+                  }
              },
              "music": {
                   "type": "text",
                   "analyzer": "sinhala-analyzer-1",
-                  "search_analyzer": "sinhala-search-analyzer"
+                  "search_analyzer": "sinhala-search-analyzer",
+                  "fields": {
+                    "keyword":{
+                       "type":"keyword"
+                    }
+                  }
              },
              "rating": {
                   "type": "integer"
