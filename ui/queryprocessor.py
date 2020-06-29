@@ -17,29 +17,29 @@ class QueryProcessor :
     @classmethod
     def processQ(self,query):
         res = self.process(query)
-        print(res)
+        # print(res)
         return res
   
     @classmethod
     def predictQType(self,tokens):
         boost_params = []
-        boosts = {"title_si":1.0,"artist":1.0,"writer":1.0,"music":1.0,"genre":1.0,"lyrics":1.0}
+        boosts = {"title_si":1,"artist":1,"writer":1,"music":1,"genre":1.0,"lyrics":1}
         for token in tokens:
             splits = word_splitter.split(token)
             if(token in rating_boosters or splits['affix'] in rating_boosters or splits['base'] in rating_boosters):
                 boost_params.append("rate")
             if(token in artist_boosters or splits['affix'] in artist_boosters or splits['base'] in artist_boosters):
                 boost_params.append("artist")
-                boosts['artist'] = 2.0
+                boosts['artist'] = 2
             if(token in writer_boosters or splits['affix'] in writer_boosters or splits['base'] in writer_boosters):
                 boost_params.append("writer")
-                boosts['writer'] = 2.0
+                boosts['writer'] = 2
             if(token in music_boosters or splits['affix'] in music_boosters or splits['base'] in music_boosters):
                 boost_params.append("music")
-                boosts['music'] = 2.0
+                boosts['music'] = 2
             if(token in genre_boosters or splits['affix'] in genre_boosters or splits['base'] in genre_boosters):
                 boost_params.append("genre")
-                boosts['genre'] = 2.0
+                boosts['genre'] = 2
             #append music as well.
         return set(boost_params),boosts
             
@@ -47,78 +47,98 @@ class QueryProcessor :
     @classmethod
     def process(self,query):
         tokens = tokenizer.tokenize(query)
-        boosts_params,boosts = predictQType(tokens)
-        if len(boosts_params) !=0:
-            if("rate" in boosts_params):
-                sortByRate = True
-            else:
-                sortByRate = False
-            res = es.search(index='hela-songs',body = self.mmatch_boost_query(tokens,boosts,sortByRate))
-        else: 
-            res = es.search(index='hela-songs',body = self.mmatch_with_agg(query))
+        boosts_params,boosts = self.predictQType(tokens)
+        print(boosts_params)
+        if("rate" in boosts_params):
+            sortByRate = True
+        else:
+            sortByRate = False
+        res = es.search(index='hela-songs',body = self.mmatch_with_agg(query,boosts,sortByRate))
         return res
 
-    def mmatch_with_agg(query):
+    def mmatch_with_agg(query,boosts,sortByRate):
         # aggregate by terms in genre
         body = {
             "query":{
                 "multi_match": {
-                    "query": query
-                    "operator":"or"
-                    "fields":["title_si","artist","music","writer","genre","lyrics"]
-                }
-            },
-            "aggs": {
-                "genre_agg": {
-                    "terms": {
-                        "field":"genre",
-                        "size": 10
-                    }
-                }
-            }
+                    "query": query,
+                    "operator":"or",
+                    "fields":[
+                        "title_si^"+str(boosts["title_si"]),
+                        "artist^"+str(boosts['artist']),
+                        "music^"+str(boosts["music"]),
+                        "writer^"+str(boosts["writer"]),
+                        "genre^"+str(boosts["genre"]),
+                        "lyrics^"+str(boosts["lyrics"])]
+                } 
         }
+        }
+        if(sortByRate):
+            body["sort"]=[{"rating" : {"order" : "desc"}}]
+            # "aggs": {
+            #     "artist_agg": {
+            #         "terms": {
+            #             "field":"artist",
+            #             "size": 10
+            #         }
+            #     }
+            # }
         return body
     
-    def mmatch_boost_query(tokens,boosts,sortByRate):
+    def mmatch_boost_query(query,boosts,sortByRate):
         #boost query
+        print("here")
+        print(query)
+        print(boosts)
         body = {
             "query": {
                 "bool":{
                     "should": {
-                        "terms":{
-                            "title_si":tokens,
-                            "boost":boosts['title_si']
+                        "match":{
+                            "title_si":{
+                                "query":query,
+                                "boost":boosts['title_si']
+                            },
                         },
-                        "terms":{
-                            "artist":tokens,
-                            "boosts":boosts['artist']
+                        "match": {
+                            "artist":{
+                                "query":query,
+                                "boost":boosts['artist']
+                            },
                         },
-                        "terms":{
-                            "writer":tokens,
-                            "boosts":boosts['writer']
+                        "match": {
+                            "writer":{
+                                "query":query,
+                                "boost":boosts['writer']
+                            },
                         },
-                        "terms":{
-                            "music":tokens,
-                            "boosts":boosts['music']
+                        "match":{
+                            "music":{
+                                "query":query,
+                                "boost":boosts['music']
+                             },
                         },
-                        "terms":{
-                            "genre":tokens,
-                            "boosts":boosts['genre']
+                        "match":{
+                            "genre":{
+                                "query":query,
+                                "boost":boosts['genre']
+                             },
                         },
-                        "terms":{
-                            "lyrics":tokens,
-                            "boosts":boosts['lyrics']
+                        "match":{
+                             "lyrics":{
+                                "query":query,
+                                "boost":boosts['lyrics']
+                            }
                         }
-
-                    }
-                }
-            },
-            "aggs":{
-                "genre_agg": {
-                    "terms": {
-                        "field":"genre",
-                        "size": 10
-                    }
+                    },
                 }
             }
+            # "aggs":{
+            #     "genre_agg": {
+            #         "terms": {
+            #             "field":"genre",
+            #             "size": 10
+            #         }
+            #     }
+            # }
         }

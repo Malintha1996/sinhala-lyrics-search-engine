@@ -86,9 +86,9 @@
                    "analyzer": "sinhala-analyzer-1",
                    "search_analyzer": "sinhala-search-analyzer",
                    "fields": {
-                     "keyword":{
-                        "type":"keyword"
-                     }
+                         "keyword":{
+                              "type":"keyword"
+                         }
                    }
               },
               "writer": {
@@ -122,4 +122,3 @@
           }
         } 
  }
- 
