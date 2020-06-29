@@ -1,1 +1,3 @@
-# sinhala-songs-lyrics-corpus - 
+# sinhala-songs-lyrics-corpus
+
+The [lyrics.json]()

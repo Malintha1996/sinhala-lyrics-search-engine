@@ -1,24 +1,20 @@
 from flask import Flask, render_template, request
-from elasticsearch import Elasticsearch
+from queryprocessor import QueryProcessor
 
 app = Flask(__name__)
-es  = Elasticsearch()
-
 @app.route('/')
 def index():
-    return render_template('index.html',response='')
+    return render_template('index.html',response=None)
 
 @app.route('/search',methods=["POST"])
 def search():
+    res = []
     if(request.method == "POST"):
-        resp = es.search(index='sinhalalyrics')
         query = request.form['query']
-    return render_template('index.html',response=resp)
+        res = QueryProcessor.processQ(query)
+        print("Got %d Hits:" % res['hits']['total']['value'])
+    return render_template('index.html',response=res)
  
 if __name__ == '__main__':
     app.DEBUG = True
     app.run()
-     search():
-    if(request.method == "POST"):
-        resp = es.search(index='sinhalalyrics')
-        query = request.form['query']

@@ -58,6 +58,16 @@ textarea {
 	border: 1px solid #ccc;
 }
 
+.result {
+	display: block;
+	background-color: lightgrey;
+	width: 600px;
+	padding: 50px;
+	border: #ccc dotted 2px;
+	box-sizing: border-box;
+	margin-top: 10px;
+}
+
 .btn {
 	display: block;
 	width: 100%;

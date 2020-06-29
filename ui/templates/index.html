@@ -11,17 +11,31 @@
             {% if message %}
             <p class="message">{{ message | safe }}</p>
             {% endif %}
+            <h2 class="header">හෙළ ගීත පදවැල්</h2>
             <form action="/search" method="POST">
               <div class="form-group" lang="si">
-                <h3>Search</h3>
+                <h3>සොයන්න</h3>
                 <input
                   type="text"
                   name="query"
-                  placeholder="Search for lyrics"
+                  placeholder="ඇතුලත් කරන්න"
                 />
               </div>
             </form>
-            {{response}}
+            {% if response!=None %}
+            <p>ප්‍රතිපල ගණන - {{response['hits']['total']['value']}}</p>
+            {% for res in response['hits']['hits']%}
+            <div class="result">
+               <p>නම: {{res['_source']['title_si']}}</p>
+               <p>ගායකයා: {{res['_source']['artist']}}</p>
+               <p>ප්‍රභේදය: {{res['_source']['genre']}}</p>
+               <p>රචකයා: {{res['_source']['writer']}}</p>
+               <p>සංගීතය: {{res['_source']['music']}}</p>
+               <p>ශ්‍රේණිගත කිරීම: {{res['_source']['rating']}}</p>
+               <p>පද වැල: {{res['_source']['lyrics']}}</p>
+            </div>
+            {% endfor %}
+            {% endif %}
         </div>
     </body>
 </html>
