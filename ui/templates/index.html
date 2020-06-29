@@ -24,6 +24,21 @@
             </form>
             {% if response!=None %}
             <p>ප්‍රතිපල ගණන - {{response['hits']['total']['value']}}</p>
+            {% if response['aggregations'] != None %}
+            {% if response['aggregations']['genre_agg'] != None %}
+            <h3>කණ්ඩායම් වර්ගකිරීම</h3>
+            {% for bucket in response['aggregations']['genre_agg']['buckets']%}
+            <p>{{bucket['key']}}: {{bucket['doc_count']}}</p>
+            {% endfor %}
+            {% endif %}
+            {% if response['aggregations']['artist_agg'] != None %}
+            <br><h3>ගායකයන් වර්ගකිරීම</h3>
+            {% for bucket in response['aggregations']['artist_agg']['buckets']%}
+            <p>{{bucket['key']}}: {{bucket['doc_count']}}</p>
+            {% endfor %}
+            {% endif %}
+            {% endif %}
+
             {% for res in response['hits']['hits']%}
             <div class="result">
                <p>නම: {{res['_source']['title_si']}}</p>

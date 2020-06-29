@@ -7,8 +7,8 @@ artist_boosters = ["ගේ","ගෙ","කියන","ගායනා","කිව
 writer_boosters = ["රචනා","ලිව්ව","ලියන","ලියපු","රචිත"]
 music_boosters = ["වාදනය","සංගීතය","නාද"]
 genre_boosters = ["පොප්","නව","පැරණි","ක්ලැසික්"]
-rating_boosters = ["හොදම","ප්‍රමුඛතම","ප්‍රධාන","ජනප්‍රිය","ගෝල්ඩන්","චිත්‍රපට"]
-boosts_default = {"title_si":1.0,"artist":1.0,"writer":1.0,"music":1.0,"genre":1.0,"lyrics":1.0}
+rating_boosters = ["හොදම","ප්‍රමුඛතම","ප්‍රධාන","ජනප්‍රිය","ගෝල්ඩන්","චිත්‍රපට","ජනප්‍රියම","ප්‍රධානතම","සුපිරි","සුපිරිතම"]
+boosts_default = {"title_si":1,"artist":1,"writer":1,"music":1,"genre":1,"lyrics":1}
 
 class QueryProcessor :
     def __init__(self):
@@ -17,15 +17,20 @@ class QueryProcessor :
     @classmethod
     def processQ(self,query):
         res = self.process(query)
-        # print(res)
+        print(res)
         return res
   
     @classmethod
     def predictQType(self,tokens):
         boost_params = []
         boosts = {"title_si":1,"artist":1,"writer":1,"music":1,"genre":1.0,"lyrics":1}
+        additional_tokens =[]
+        print(tokens)
         for token in tokens:
+            #split the tokens to identify affixes
             splits = word_splitter.split(token)
+            additional_tokens.append(splits['base'])
+            #add base to query depending on the threshold
             if(token in rating_boosters or splits['affix'] in rating_boosters or splits['base'] in rating_boosters):
                 boost_params.append("rate")
             if(token in artist_boosters or splits['affix'] in artist_boosters or splits['base'] in artist_boosters):
@@ -41,19 +46,26 @@ class QueryProcessor :
                 boost_params.append("genre")
                 boosts['genre'] = 2
             #append music as well.
-        return set(boost_params),boosts
+        query_mod = " ".join(tokens+additional_tokens)
+        return set(boost_params),boosts,query_mod
             
 
     @classmethod
     def process(self,query):
         tokens = tokenizer.tokenize(query)
-        boosts_params,boosts = self.predictQType(tokens)
-        print(boosts_params)
-        if("rate" in boosts_params):
+        boosts_params,boosts,query_mod= self.predictQType(tokens)
+        if("rate" in boosts_params and len(boosts_params)>1):
             sortByRate = True
+            res = es.search(index='hela-songs',body = self.mmatch_with_agg(query_mod,boosts,sortByRate))
+        elif("rate" in boosts_params and len(boosts_params)==1):
+            sortByRate = True
+            if(len(tokens) == 1):
+                res = es.search(index='hela-songs',body = self.allmatch_best_with_aggs(sortByRate))
+            else:
+                res = es.search(index='hela-songs',body = self.mmatch_with_agg(query_mod,boosts,sortByRate))
         else:
             sortByRate = False
-        res = es.search(index='hela-songs',body = self.mmatch_with_agg(query,boosts,sortByRate))
+            res = es.search(index='hela-songs',body = self.mmatch_with_agg(query_mod,boosts,sortByRate))
         return res
 
     def mmatch_with_agg(query,boosts,sortByRate):
@@ -74,71 +86,40 @@ class QueryProcessor :
         }
         }
         if(sortByRate):
-            body["sort"]=[{"rating" : {"order" : "desc"}}]
-            # "aggs": {
-            #     "artist_agg": {
-            #         "terms": {
-            #             "field":"artist",
-            #             "size": 10
-            #         }
-            #     }
-            # }
+            body["sort"] = [{"rating" : {"order" : "desc"}}]
+            
+        body["aggs"] =  {
+                "genre_agg":{
+                    "terms": {
+                        "field":"genre.keyword",
+                        "size":10
+                    }
+                }
+        }
         return body
     
-    def mmatch_boost_query(query,boosts,sortByRate):
-        #boost query
-        print("here")
-        print(query)
-        print(boosts)
+    def allmatch_best_with_aggs(sortByRate):
         body = {
-            "query": {
-                "bool":{
-                    "should": {
-                        "match":{
-                            "title_si":{
-                                "query":query,
-                                "boost":boosts['title_si']
-                            },
-                        },
-                        "match": {
-                            "artist":{
-                                "query":query,
-                                "boost":boosts['artist']
-                            },
-                        },
-                        "match": {
-                            "writer":{
-                                "query":query,
-                                "boost":boosts['writer']
-                            },
-                        },
-                        "match":{
-                            "music":{
-                                "query":query,
-                                "boost":boosts['music']
-                             },
-                        },
-                        "match":{
-                            "genre":{
-                                "query":query,
-                                "boost":boosts['genre']
-                             },
-                        },
-                        "match":{
-                             "lyrics":{
-                                "query":query,
-                                "boost":boosts['lyrics']
-                            }
-                        }
-                    },
+            "query":{
+                "match_all": {} 
+            }
+        }
+        if(sortByRate):
+            body["sort"]=[{"rating" : {"order" : "desc"}}]
+        body["aggs"] =  {
+                "artist_agg": {
+                    "terms": {
+                        "field":"artist.keyword",
+                        "size":20
+                    }
+                },
+                "genre_agg":{
+                    "terms": {
+                        "field":"genre.keyword",
+                        "size":10
+                    }
                 }
             }
-            # "aggs":{
-            #     "genre_agg": {
-            #         "terms": {
-            #             "field":"genre",
-            #             "size": 10
-            #         }
-            #     }
-            # }
-        }
+        return body
+        
+        
