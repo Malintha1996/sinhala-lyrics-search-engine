@@ -31,12 +31,6 @@
             <p>{{bucket['key']}}: {{bucket['doc_count']}}</p>
             {% endfor %}
             {% endif %}
-            {% if response['aggregations']['artist_agg'] != None %}
-            <br><h3>ගායකයන් වර්ගකිරීම</h3>
-            {% for bucket in response['aggregations']['artist_agg']['buckets']%}
-            <p>{{bucket['key']}}: {{bucket['doc_count']}}</p>
-            {% endfor %}
-            {% endif %}
             {% endif %}
 
             {% for res in response['hits']['hits']%}
